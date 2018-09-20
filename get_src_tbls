@@ -1,0 +1,54 @@
+def get_tbls_in_ddl(fname):
+	my_string = ['from','join']
+	exclude_string = "FROM ("
+	from_clause = []
+	srctbls = []
+
+	with open(fname, "r+") as f:
+		for line in f:
+			# ignore line if FROM followed by parenthesis
+			# if the line contains either FROM or JOIN take the lines
+			if any(x in line.lower() for x in my_string) and exclude_string.lower() not in line.lower():
+				from_clause.append(line)
+
+	t = 'FROM'
+	j = 'JOIN'
+
+	# take the word after either JOIN or FROM 
+	for s in from_clause:
+		if t in s:
+			i = s.split().index(t)
+			# print (s.split()[i+1])
+			srctbls.append(s.split()[i+1])
+		elif j in s:
+			i = s.split().index(j)
+			# print (s.split()[i+1])	
+			srctbls.append(s.split()[i+1])	
+
+	# dedup
+	srctbls = list(set(srctbls))
+	return sorted(srctbls)
+
+
+
+
+def get_fnames_wi_pattern(pattern, path):
+	import os
+	fnames = []
+	for name in os.listdir(path):
+		if pattern in name:
+			fnames.append(name)   
+	return(fnames)	
+
+path = 'C:/Users/arul.francis/Documents/sales_biz_views_srccode_prod_ao_0914/'	
+pattern = 'acc'
+
+files = get_fnames_wi_pattern(pattern, path)
+
+for file in files:
+	print('******')
+	print(file)
+	fname = path + file
+	tbls = get_tbls_in_ddl(fname)
+	for tbl in tbls: 
+		print(tbl)
