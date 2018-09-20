@@ -1,0 +1,57 @@
+import pandas as pd
+from sqlalchemy import create_engine
+import sqlalchemy
+import psycopg2
+import json
+
+# read redshift connection credentials
+with open("C:\\Users\\arul.francis\\Desktop\\mystuff\\creds\\redshift_creds_prd.json") as fh:
+    creds = json.load(fh)
+
+# define redshift connection string
+connstr = 'redshift+psycopg2://' + \
+                creds['user_name'] + ':' + creds['password'] + '@' + \
+                creds['host_name'] + ':' + creds['port_num'] + '/' + creds['db_name'];
+
+red_engine = create_engine(connstr)
+
+# this query will get the ddl for each view;
+
+test_query = """
+SELECT 
+    n.nspname AS schemaname
+    ,c.relname AS viewname
+    ,'DROP VIEW IF EXISTS ' + QUOTE_IDENT(n.nspname) + '.' + QUOTE_IDENT(c.relname) + ';\n \n'
+    + CASE 
+     	WHEN c.relnatts > 0 then 'CREATE OR REPLACE VIEW ' + QUOTE_IDENT(n.nspname) + '.' + QUOTE_IDENT(c.relname) + ' AS\n' + COALESCE(pg_get_viewdef(c.oid, TRUE), '')
+     	ELSE  COALESCE(pg_get_viewdef(c.oid, TRUE), '') 
+     	
+    END 
+    + '\n \n' + 'GRANT SELECT on ' + QUOTE_IDENT(n.nspname) + '.' + QUOTE_IDENT(c.relname) + ' TO GROUP sales_team;\n'        
+AS ddl
+FROM 
+    pg_catalog.pg_class AS c
+INNER JOIN
+    pg_catalog.pg_namespace AS n
+    ON c.relnamespace = n.oid
+WHERE relkind = 'v'
+AND schemaname NOT IN('information_schema', 'pg_catalog')
+"""
+
+test = pd.read_sql_query(test_query,red_engine)
+
+import pathlib, os
+
+path = pathlib.PureWindowsPath(r'C:\Users\arul.francis\Documents\sales_biz_views_srccode_prod_ao_0914\prod_0918')
+
+from datetime import date
+today = date.today().strftime('%m%d%Y')
+# print(today)   # 09182018
+
+def write_ddl_file(schemaname, viewname, path, s):
+    ffname = os.path.join (path, schemaname + '_' + viewname + '_' + today + '.sql')
+    with open(ffname, 'w') as fh:
+        fh.write(s)
+
+for index, row in test.iterrows():
+    write_ddl_file(row["schemaname"], row["viewname"], path, row["ddl"])                        
