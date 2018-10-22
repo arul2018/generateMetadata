@@ -1,0 +1,42 @@
+from sqlalchemy import create_engine
+
+import sqlalchemy
+import psycopg2
+import json
+import pandas as pd
+
+# with open("C:\\Users\\arul.francis\\Desktop\\mystuff\\creds\\redshift_creds_prd.json") as fh:
+with open("C:\\Users\\arul.francis\\Desktop\\mystuff\\creds\\redshift_creds_pfix.json") as fh:
+    creds = json.load(fh)
+
+
+connstr = 'redshift+psycopg2://' + \
+                creds['user_name'] + ':' + creds['password'] + '@' + \
+                creds['host_name'] + ':' + creds['port_num'] + '/' + creds['db_name'];
+
+engine = create_engine(connstr)
+
+with engine.connect() as conn, conn.begin():
+    df = pd.read_sql("""
+    select * from facts.xxx where marketing_classification is not null limit 5;
+    """, conn)
+
+df.fillna('', inplace=True)
+
+# write to gdoc by doc id
+
+import gspread
+service_file='C:\\Users\\arul.francis\\Desktop\\mystuff\\creds\\BreakOutIndivSheets.json'
+
+from oauth2client.service_account import ServiceAccountCredentials
+scope = ['https://spreadsheets.google.com/feeds']
+credentials = ServiceAccountCredentials.from_json_keyfile_name(service_file, scope)
+
+gc = gspread.authorize(credentials)
+
+spreadsheet_key = 'xxxx'
+book = gc.open_by_key(spreadsheet_key)
+
+from df2gspread import df2gspread as d2g
+wks_name = 'f_pixxx'
+d2g.upload(df, spreadsheet_key, wks_name, credentials=credentials, row_names=True)
