@@ -1,0 +1,49 @@
+'''from sfdc uat 
+get the accounts 
+   updated in the last 3 days 
+and put it in a gdoc  
+    https://docs.google.com/spreadsheets/d/xxxxx/edit?usp=sharing
+'''
+# UAT credentials
+
+USER='xxx@company.com.uat'
+PWD='***'
+token='***'    
+
+from simple_salesforce import Salesforce
+import pytz
+import datetime
+import pygsheets
+from pandas.io.json import json_normalize 
+import pandas as pd
+
+sf = Salesforce(username=USER, password=PWD, security_token=token, sandbox=True)
+
+end = datetime.datetime.now(pytz.UTC) # we need to use UTC as salesforce API requires this
+result = sf.Account.updated(end - datetime.timedelta(days=3), end)
+
+# get just the ids
+ids, _ = result.values() 
+
+def get_account_data(accountids):
+    data = []
+    for accountid in accountids:
+        account = sf.Account.get(accountid)
+        data.append(account)
+    return data
+
+d = get_account_data(ids) #[:3])
+
+df3 = pd.DataFrame.from_dict(json_normalize(d), orient='columns')
+
+def write_df_to_gdoc(dataframein):
+    import pygsheets
+    gc = pygsheets.authorize(service_file='C:\\Users\\arul.francis\\Desktop\\mystuff\\creds\\BreakOutIndivSheets.json')
+    key = '****'
+    sh = gc.open_by_key(key, returnas='spreadsheet')
+    #update the second sheet with dfaccount, starting at cell B2. 
+    wks1 = sh[1]
+    wks1.set_dataframe(dataframein,(1,1))
+
+write_df_to_gdoc(df3)        
+
