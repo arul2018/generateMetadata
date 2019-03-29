@@ -1,0 +1,38 @@
+from simple_salesforce import Salesforce
+
+import pandas as pd
+import json
+
+USER='***'
+PWD='***'
+token='***'
+
+sf = Salesforce(username=USER, password=PWD, security_token=token)
+
+def get_col_attributes(object_name):
+    fields = sf.restful("sobjects/{}/describe/".format(object_name), params=None)
+    rows = fields['fields']
+    field_list = []
+    for row in rows:
+        tmp = {}
+        tmp = row['label'], row['name'], row['type'], row['length'], row['precision'], row['scale']
+    field_list = []
+    for row in rows:
+        temp = {}
+        temp['label'] = row['label']
+        temp['name'] = row['name']
+        temp['type'] = row['type']
+        temp['length'] = row['length']
+        temp['precision'] = row['precision']
+        temp['scale'] = row['scale']
+        field_list.append(temp)
+    return field_list
+
+object_names = ['Account', 'Apttus_Proposal__Proposal_Line_Item__c', 'Apttus_Proposal__Proposal__c', 'Apttus__APTS_Agreement__c', 'Apttus__AgreementLineItem__c', 'Campaign', 'CampaignMember', 'Case', 'Competitive_Intelligence_Account__c', 'Competitive_Intelligence_Opportunity__c', 'Contact', 'Contact_Detail__c', 'CurrencyType', 'Customer_Heatmap_Rank__c', 'Customer_SKU_Heatmap__c', 'DMAPP__AM_Action__c', 'DMAPP__AM_Plan_Metric_Score__c', 'DMAPP__AM_Plan_Team__c', 'DMAPP__AM_Plan_Unit__c', 'DMAPP__Account_Insight_Map_Node_Parent__c', 'DMAPP__Account_Insight_Map_Node__c', 'DMAPP__Account_Insight_Map__c', 'DMAPP__Account_Plan_Objective__c', 'DMAPP__Account_Plan_Unit_Insight_Map__c', 'DMAPP__Account_Political_Map_Contact__c', 'DMAPP__Account_Political_Map__c', 'DMAPP__DM_Account_Plan__c', 'DMAPP__Plan_Unit_Member_Account__c', 'DatedConversionRate', 'Event', 'External_Selling_Activity__c', 'HVA_Task__c', 'Lead', 'Opportunity', 'OpportunityContactRole', 'OpportunityTeamMember', 'Product2', 'RecordType', 'Task', 'User', 'UserRole', 'AccountHistory', 'ContactHistory', 'LeadHistory', 'OpportunityFieldHistory']
+
+# write to csv file, one file per object, using csvdictwriter   
+
+for object_name in object_names:
+    field_list = get_col_attributes(object_name)
+    write_obj_attribs(object_name, field_list)
+    
