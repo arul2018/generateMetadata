@@ -24,16 +24,13 @@ def get_files_in_path(loc):
         files.append(fname)
     return files
 
-def get_files_in_path(loc):
-    """get all the files in this loc 
-    and put an _out before the .csv
-    and return the list of file names"""
-    entries = os.scandir(path)
-    files = []
-    for entry in entries:
-        fname = os.path.join(path, entry.name)
-        files.append(fname)
-    return files
+def main():
+    import pandas as pd
+    import os
+    loc = 'pcyc_txn_spend_cia_22'
+    files = get_files_in_path(loc)
+    for file in files:
+        clean_file(file)
     
 main()            
 
