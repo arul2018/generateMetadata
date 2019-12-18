@@ -1,0 +1,35 @@
+# Import the interface required by the Script snap.
+from com.snaplogic.scripting.language import ScriptHook
+import java.util
+
+class TransformScript(ScriptHook):
+    def __init__(self, input, output, error, log):
+        self.input = input
+        self.output = output
+        self.error = error
+        self.log = log
+
+    # The "execute()" method is called once when the pipeline is started
+    # and allowed to process its inputs or just send data to its outputs.
+    def execute(self):
+        self.log.info("Executing Transform script")
+        while self.input.hasNext():
+        	data = self.input.next()
+        	new_data = {}
+
+        	column_names = data.keySet()
+
+        	for column_name in column_names:
+        	    new_data[data['default_key']] = data['default_value']
+
+        	try:
+        		self.output.write(new_data)
+        	except Exception as e:
+        		data["errorMessage"] = e.message
+        		self.error.write(data)
+
+	self.log.info("Finished executing the Transform script")
+
+# The Script Snap will look for a ScriptHook object in the "hook"
+# variable.  The snap will then call the hook's "execute" method.
+hook = TransformScript(input, output, error, log)
