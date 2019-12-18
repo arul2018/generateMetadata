@@ -4,7 +4,7 @@
 # read in creds from local file
 def get_azure_creds():
     import json
-    creds_file = r'C:\Users\afrancis038\Documents\creds\azure_gbltt_creds.json'
+    creds_file = r'C:\Users\johndoe\Documents\creds\azure_gbltt_creds.json'
     with open(creds_file) as fh:
         data = fh.read()
     creds = json.loads(data)
@@ -30,7 +30,7 @@ def main():
 	# open an azure connection
 	block_blob_service =connect_to_azure(azure_creds)
 
-	big_file = r'C:\Users\afrancis038\Documents\global_transparency\nppes_public_data\NPPES_Data_Dissemination_November_2019\npidata_pfile_20050523-20191110.csv'
+	big_file = r'C:\Users\johndoe\Documents\global_transparency\nppes_public_data\NPPES_Data_Dissemination_November_2019\npidata_pfile_20050523-20191110.csv'
 
 	cols = ['NPI', 'Provider Last Name (Legal Name)', 'Provider First Name', 'Provider Middle Name']
 
