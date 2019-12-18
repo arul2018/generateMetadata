@@ -1,0 +1,58 @@
+# split a larger df into smaller chunks using pandas
+# then write each chunk as file directly to azure location
+
+# read in creds from local file
+def get_azure_creds():
+    import json
+    creds_file = r'C:\Users\afrancis038\Documents\creds\azure_gbltt_creds.json'
+    with open(creds_file) as fh:
+        data = fh.read()
+    creds = json.loads(data)
+    return creds
+
+def connect_to_azure(creds):
+    from azure.storage.blob import BlockBlobService, PublicAccess
+    from azure.storage.blob import ContentSettings
+    
+    block_blob_service = BlockBlobService(account_name=creds['azure_account_name'], account_key=creds['azure_account_key'])
+    return block_blob_service
+
+def main():
+
+	import os, uuid, sys
+	import pandas as pd
+
+	# import azure connectivty py libraries
+	from azure.storage.blob import BlockBlobService, PublicAccess
+	from azure.storage.blob import ContentSettings
+
+	azure_creds = get_azure_creds()        
+	# open an azure connection
+	block_blob_service =connect_to_azure(azure_creds)
+
+	big_file = r'C:\Users\afrancis038\Documents\global_transparency\nppes_public_data\NPPES_Data_Dissemination_November_2019\npidata_pfile_20050523-20191110.csv'
+
+	cols = ['NPI', 'Provider Last Name (Legal Name)', 'Provider First Name', 'Provider Middle Name']
+
+	reader = pd.read_csv(big_file,
+	#                       usecols=cols_2, 
+	                      iterator=True,index_col=False,
+	                      # chunksize=30000
+	                      chunksize=300
+	                      )
+
+	# set up azure container and output file dir name
+	container_name='gbltt-01'
+	# azure_file_name_pfix ='input_files/master_data/npi_test/'
+	azure_file_name_pfix ='input_files/master_data/'
+	output_file_name = 'npi_tst_'
+
+	# for i in range(200):
+	for i in range(2):		
+	    fname = output_file_name + str(i+1) + '.csv'
+	    azure_file_full_name = azure_file_name_pfix + fname
+	    output = next(reader).to_csv(na_rep='',index=False, encoding="utf-8")
+	    block_blob_service.create_blob_from_text(container_name, azure_file_full_name, output, content_settings=ContentSettings(content_type='text/csv'))
+
+
+main()
